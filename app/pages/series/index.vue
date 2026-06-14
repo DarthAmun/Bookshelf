@@ -42,19 +42,19 @@ async function handleAddSeries() {
 <template>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
-      <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100">Series</h1>
+      <h1 class="font-serif text-[28px] font-medium text-bone">Series</h1>
       <div class="flex gap-2">
         <button
           type="button"
           :disabled="refreshing"
-          class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-60 transition-colors"
+          class="px-3 py-1.5 text-sm text-muted border border-white/10 rounded-lg hover:bg-ink-800 disabled:opacity-60 transition-colors"
           @click="refreshAll"
         >
           {{ refreshing ? 'Checking…' : 'Refresh all' }}
         </button>
         <button
           type="button"
-          class="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+          class="addbtn px-3 py-1.5 text-sm rounded-lg font-medium"
           @click="showAddForm = !showAddForm"
         >
           + Add series
@@ -64,46 +64,46 @@ async function handleAddSeries() {
 
     <NewReleaseBanner :series="seriesWithNew" />
 
-    <div v-if="showAddForm" class="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 p-4 space-y-3">
-      <h2 class="font-semibold text-gray-900 dark:text-gray-100">Add new series</h2>
+    <div v-if="showAddForm" class="bg-ink-850 rounded-xl border hair p-4 space-y-3">
+      <h2 class="font-semibold text-bone">Add new series</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <input
           v-model="newSeries.name"
           type="text"
           placeholder="Series name"
-          class="px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          class="field px-3 py-2 rounded-lg text-sm"
         >
         <input
           v-model="newSeries.author"
           type="text"
           placeholder="Author"
-          class="px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          class="field px-3 py-2 rounded-lg text-sm"
         >
         <input
           v-model="newSeries.googleBooksQueryName"
           type="text"
           placeholder="Google Books query name (optional)"
-          class="px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          class="field px-3 py-2 rounded-lg text-sm"
         >
         <input
           v-model.number="newSeries.knownTotal"
           type="number"
           min="1"
           placeholder="Total books (optional)"
-          class="px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          class="field px-3 py-2 rounded-lg text-sm"
         >
       </div>
       <div class="flex gap-2">
         <button
           type="button"
-          class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+          class="addbtn px-4 py-2 rounded-lg text-sm font-medium"
           @click="handleAddSeries"
         >
           Save
         </button>
         <button
           type="button"
-          class="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:underline"
+          class="px-4 py-2 text-sm text-muted hover:text-bone"
           @click="showAddForm = false"
         >
           Cancel
@@ -119,7 +119,7 @@ async function handleAddSeries() {
         :progress="progresses[s.id] ?? { read: 0, total: 0 }"
       />
     </div>
-    <div v-else class="text-center py-20 text-gray-400 dark:text-gray-500">
+    <div v-else class="text-center py-20 text-faint">
       <p>No series tracked yet.</p>
     </div>
   </div>

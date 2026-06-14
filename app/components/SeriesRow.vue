@@ -13,25 +13,25 @@ function formatDate(dateStr: string | undefined) {
 <template>
   <NuxtLink
     :to="`/series/${series.id}`"
-    class="flex items-center justify-between gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 hover:shadow-sm transition-shadow"
+    class="flex items-center justify-between gap-4 p-4 bg-ink-850 rounded-xl border hair hover:bg-ink-800 transition-colors"
   >
     <div class="min-w-0">
       <div class="flex items-center gap-2">
-        <h3 class="font-semibold text-gray-900 dark:text-gray-100 truncate">{{ series.name }}</h3>
+        <h3 class="font-semibold text-bone truncate">{{ series.name }}</h3>
         <span
           v-if="series.newReleaseAvailable"
-          class="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300"
+          class="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brass/20 text-brass"
         >
           New!
         </span>
       </div>
-      <p class="text-sm text-gray-500 dark:text-gray-400">{{ series.author }}</p>
-      <div v-if="series.newReleaseAvailable && series.nextBookTitle" class="mt-1 text-xs text-indigo-600 dark:text-indigo-400">
+      <p class="text-sm text-muted">{{ series.author }}</p>
+      <div v-if="series.newReleaseAvailable && series.nextBookTitle" class="mt-1 text-xs text-brass">
         "{{ series.nextBookTitle }}"
         <span v-if="series.nextBookDate">({{ formatDate(series.nextBookDate) }})</span>
       </div>
     </div>
-    <div class="flex-shrink-0 text-sm font-medium text-gray-600 dark:text-gray-300">
+    <div class="flex-shrink-0 text-sm font-medium text-muted">
       {{ progress.read }} / {{ progress.total }} read
     </div>
   </NuxtLink>

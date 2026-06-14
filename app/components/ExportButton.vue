@@ -22,7 +22,7 @@ async function handleHtml() {
     <button
       type="button"
       :disabled="loadingJson"
-      class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
+      class="addbtn inline-flex items-center gap-2 px-4 py-2 disabled:opacity-60 rounded-lg text-sm font-medium"
       @click="handleJson"
     >
       <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -33,7 +33,7 @@ async function handleHtml() {
     <button
       type="button"
       :disabled="loadingHtml"
-      class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 hover:bg-slate-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
+      class="inline-flex items-center gap-2 px-4 py-2 border border-white/10 text-muted hover:bg-ink-800 disabled:opacity-60 rounded-lg text-sm font-medium transition-colors"
       @click="handleHtml"
     >
       <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -1,5 +1,10 @@
 import type { Book } from '../composables/useDb'
 
+export interface BookMeta extends Partial<Book> {
+  seriesNameHint?: string
+  seriesPosHint?: number
+}
+
 export function extractAsin(url: string): string | null {
   const match = url.match(/(?:\/dp\/|\/gp\/product\/)([A-Z0-9]{10})/)
   return match ? match[1] : null
@@ -16,7 +21,7 @@ export function extractUrlSlug(url: string): string | null {
 }
 
 export type LookupResult =
-  | { status: 'found'; book: Partial<Book> }
+  | { status: 'found'; book: BookMeta }
   | { status: 'needs_search'; asin: string; suggestedQuery: string }
   | { status: 'error' }
 
@@ -36,13 +41,21 @@ interface GoogleVolume {
   }
 }
 
-function mapVolumeToBook(volume: GoogleVolume, asin?: string): Partial<Book> {
+function extractSeriesFromTitle(rawTitle: string): { cleanTitle: string; seriesName: string; seriesPosition?: number } | null {
+  const m = rawTitle.match(/^(.+?)\s*\(([^)]+?),\s*(?:#|[Bb]ook\s*|[Pp]art\s*|[Vv]ol(?:ume)?\s*)(\d+)[^)]*\)/)
+  if (!m) return null
+  return { cleanTitle: m[1].trim(), seriesName: m[2].trim(), seriesPosition: parseInt(m[3]) }
+}
+
+function mapVolumeToBook(volume: GoogleVolume, asin?: string): BookMeta {
   const info = volume.volumeInfo
   const isbn10 = info.industryIdentifiers?.find(i => i.type === 'ISBN_10')?.identifier
   const isbn13 = info.industryIdentifiers?.find(i => i.type === 'ISBN_13')?.identifier
+  const rawTitle = info.title ?? ''
+  const seriesInfo = extractSeriesFromTitle(rawTitle)
   return {
     googleBooksId: volume.id,
-    title: info.title,
+    title: seriesInfo ? seriesInfo.cleanTitle : rawTitle,
     author: info.authors?.[0] ?? 'Unknown',
     asin,
     isbn: isbn10 ?? isbn13,
@@ -54,6 +67,8 @@ function mapVolumeToBook(volume: GoogleVolume, asin?: string): Partial<Book> {
     pageCount: info.pageCount,
     language: info.language,
     genre: info.categories?.[0],
+    seriesNameHint: seriesInfo?.seriesName,
+    seriesPosHint: seriesInfo?.seriesPosition,
   }
 }
 
@@ -84,7 +99,7 @@ async function openLibraryLookup(asin: string): Promise<Partial<Book> | null> {
 }
 
 // Step 2: Google Books search — returns up to 5 results for the user to pick from
-export async function searchGoogleBooks(query: string, apiKey?: string): Promise<Partial<Book>[]> {
+export async function searchGoogleBooks(query: string, apiKey?: string): Promise<BookMeta[]> {
   const cleanedQuery = query.replace(/\bprintType:\S+/g, '').trim()
   const keyParam = apiKey ? `&key=${apiKey}` : ''
   try {

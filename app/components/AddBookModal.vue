@@ -4,6 +4,7 @@ import { addBook } from '~/composables/useBooks'
 import { addSeries, findSeriesByName } from '~/composables/useSeries'
 import { db } from '~/composables/useDb'
 import { extractAsin, extractUrlSlug, lookupByAsin, searchGoogleBooks } from '~/services/bookLookup'
+import type { BookMeta } from '~/services/bookLookup'
 import { SPINE_COLORS, colorFromString, spineInitialFor, surnameOf } from '~/utils/bookTheme'
 import type { Book } from '~/composables/useDb'
 
@@ -15,7 +16,7 @@ const STATUS_OPTIONS: Array<{ value: Book['status']; label: string }> = [
   { value: 'abandoned', label: 'Abandoned' },
 ]
 
-interface LookupHit extends Partial<Book> { displayColor: string }
+interface LookupHit extends BookMeta { displayColor: string }
 
 const { books } = useLibrary()
 const accNoDisplay = computed(() => String(books.value.length + 1).padStart(4, '0'))
@@ -156,6 +157,8 @@ function selectResult(r: LookupHit) {
   if (r.genre) form.genre = r.genre
   if (r.coverUrl) { form.coverUrl = r.coverUrl; revokeBlobUrl() }
   form.selectedCloth = r.displayColor
+  if (r.seriesNameHint && !form.seriesName) form.seriesName = r.seriesNameHint
+  if (r.seriesPosHint && !form.seriesPos) form.seriesPos = String(r.seriesPosHint)
   lookupQuery.value = ''
   showLookupResults.value = false
 }

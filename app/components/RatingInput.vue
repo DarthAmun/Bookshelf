@@ -17,14 +17,14 @@ function setRating(val: number) {
       :key="n"
       type="button"
       class="text-lg leading-none focus:outline-none transition-colors"
-      :class="n <= displayed ? 'text-amber-400' : 'text-gray-300 dark:text-gray-600'"
+      :class="n <= displayed ? 'text-brass-soft' : 'text-faint'"
       @mouseenter="hovered = n"
       @mouseleave="hovered = null"
       @click="setRating(n)"
     >
       {{ n % 2 !== 0 ? '⬠' : '★' }}
     </button>
-    <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">
+    <span class="ml-2 text-sm text-faint">
       {{ modelValue ? `${modelValue}/10` : 'No rating' }}
     </span>
   </div>

@@ -79,43 +79,43 @@ const seriesCompletion = computed(() => {
 
 <template>
   <div class="space-y-8 max-w-3xl mx-auto">
-    <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100">Reading stats</h1>
+    <h1 class="font-serif text-[28px] font-medium text-bone">Reading stats</h1>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 p-4 text-center">
-        <div class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{{ booksRead }}</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Books read (all time)</div>
+      <div class="bg-ink-850 rounded-xl border hair p-4 text-center">
+        <div class="text-3xl font-bold text-brass">{{ booksRead }}</div>
+        <div class="text-xs text-faint mt-1">Books read (all time)</div>
       </div>
-      <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 p-4 text-center">
-        <div class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{{ booksThisYear }}</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Books read this year</div>
+      <div class="bg-ink-850 rounded-xl border hair p-4 text-center">
+        <div class="text-3xl font-bold text-brass">{{ booksThisYear }}</div>
+        <div class="text-xs text-faint mt-1">Books read this year</div>
       </div>
-      <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 p-4 text-center">
-        <div class="text-3xl font-bold text-amber-500">{{ avgRating ?? '—' }}</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Avg rating</div>
+      <div class="bg-ink-850 rounded-xl border hair p-4 text-center">
+        <div class="text-3xl font-bold text-brass-soft">{{ avgRating ?? '—' }}</div>
+        <div class="text-xs text-faint mt-1">Avg rating</div>
       </div>
-      <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 p-4 text-center">
-        <div class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{{ books.length }}</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Total in library</div>
+      <div class="bg-ink-850 rounded-xl border hair p-4 text-center">
+        <div class="text-3xl font-bold text-brass">{{ books.length }}</div>
+        <div class="text-xs text-faint mt-1">Total in library</div>
       </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 p-5 space-y-3">
-      <h2 class="font-semibold text-gray-900 dark:text-gray-100">Books per month (last 12 months)</h2>
+    <div class="bg-ink-850 rounded-xl border hair p-5 space-y-3">
+      <h2 class="font-semibold text-bone">Books per month (last 12 months)</h2>
       <StatsChart :data="monthlyPace" type="bar" />
     </div>
 
-    <div v-if="genreBreakdown.length" class="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 p-5 space-y-3">
-      <h2 class="font-semibold text-gray-900 dark:text-gray-100">Genre breakdown</h2>
+    <div v-if="genreBreakdown.length" class="bg-ink-850 rounded-xl border hair p-5 space-y-3">
+      <h2 class="font-semibold text-bone">Genre breakdown</h2>
       <StatsChart :data="genreBreakdown" type="horizontal-bar" />
     </div>
 
-    <div v-if="topBooks.length" class="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 p-5 space-y-3">
-      <h2 class="font-semibold text-gray-900 dark:text-gray-100">Top 5 rated</h2>
+    <div v-if="topBooks.length" class="bg-ink-850 rounded-xl border hair p-5 space-y-3">
+      <h2 class="font-semibold text-bone">Top 5 rated</h2>
       <ol class="space-y-2">
         <li v-for="(item, i) in topBooks" :key="i" class="flex items-center gap-3">
-          <span class="text-sm font-bold text-gray-400 dark:text-gray-500 w-4">{{ i + 1 }}</span>
-          <NuxtLink :to="`/book/${item.book!.id}`" class="flex-1 text-sm text-gray-900 dark:text-gray-100 hover:underline truncate">
+          <span class="text-sm font-bold text-faint w-4">{{ i + 1 }}</span>
+          <NuxtLink :to="`/book/${item.book!.id}`" class="flex-1 text-sm text-bone hover:underline truncate">
             {{ item.book!.title }}
           </NuxtLink>
           <RatingDisplay :rating="item.rating" size="sm" />
@@ -123,10 +123,10 @@ const seriesCompletion = computed(() => {
       </ol>
     </div>
 
-    <div v-if="seriesCompletion.length" class="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 p-5 space-y-3">
-      <h2 class="font-semibold text-gray-900 dark:text-gray-100">Series completion</h2>
+    <div v-if="seriesCompletion.length" class="bg-ink-850 rounded-xl border hair p-5 space-y-3">
+      <h2 class="font-semibold text-bone">Series completion</h2>
       <StatsChart :data="seriesCompletion" type="horizontal-bar" />
-      <p class="text-xs text-gray-400 dark:text-gray-500">Showing % of known total read</p>
+      <p class="text-xs text-faint">Showing % of known total read</p>
     </div>
   </div>
 </template>

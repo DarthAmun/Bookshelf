@@ -104,19 +104,19 @@ async function handleSave() {
 <template>
   <div class="max-w-2xl mx-auto space-y-6">
     <div class="flex items-center gap-3">
-      <NuxtLink to="/" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+      <NuxtLink to="/" class="text-faint hover:text-muted">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
       </NuxtLink>
-      <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100">Add a book</h1>
+      <h1 class="font-serif text-[28px] font-medium text-bone">Add a book</h1>
     </div>
 
     <!-- Tab switcher -->
-    <div class="flex gap-1 bg-gray-100 dark:bg-slate-700 p-1 rounded-lg w-fit">
+    <div class="flex gap-1 bg-ink-800 p-1 rounded-lg w-fit">
       <button
         type="button"
-        :class="activeTab === 'amazon' ? 'bg-white dark:bg-slate-600 shadow-sm' : ''"
+        :class="activeTab === 'amazon' ? 'bg-ink-850 shadow-sm text-bone' : 'text-muted'"
         class="px-4 py-1.5 rounded-md text-sm font-medium transition-all"
         @click="activeTab = 'amazon'"
       >
@@ -124,7 +124,7 @@ async function handleSave() {
       </button>
       <button
         type="button"
-        :class="activeTab === 'manual' ? 'bg-white dark:bg-slate-600 shadow-sm' : ''"
+        :class="activeTab === 'manual' ? 'bg-ink-850 shadow-sm text-bone' : 'text-muted'"
         class="px-4 py-1.5 rounded-md text-sm font-medium transition-all"
         @click="activeTab = 'manual'"
       >
@@ -141,24 +141,24 @@ async function handleSave() {
           v-model="amazonUrl"
           type="url"
           placeholder="Paste Amazon URL…"
-          class="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          class="field flex-1 px-3 py-2 rounded-lg text-sm"
           @keydown.enter="handleLookup"
         >
         <button
           type="button"
           :disabled="lookupLoading || !amazonUrl"
-          class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
+          class="addbtn px-4 py-2 disabled:opacity-60 rounded-lg text-sm font-medium"
           @click="handleLookup"
         >
           {{ lookupLoading ? 'Looking up…' : 'Look up' }}
         </button>
       </div>
 
-      <p v-if="lookupError" class="text-sm text-red-600 dark:text-red-400">{{ lookupError }}</p>
+      <p v-if="lookupError" class="text-sm text-red-400">{{ lookupError }}</p>
 
       <!-- needs_search: prompt user to enter title -->
-      <div v-if="phase.kind === 'needs_search'" class="rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-4 space-y-3">
-        <p class="text-sm text-amber-800 dark:text-amber-300">
+      <div v-if="phase.kind === 'needs_search'" class="rounded-xl border border-brass-dim/40 bg-brass-dim/10 p-4 space-y-3">
+        <p class="text-sm text-brass-soft">
           Could not identify this book automatically — enter the title to search Google Books.
         </p>
         <div class="flex gap-2">
@@ -166,13 +166,13 @@ async function handleSave() {
             v-model="searchQuery"
             type="text"
             placeholder="Title or author…"
-            class="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="field flex-1 px-3 py-2 rounded-lg text-sm"
             @keydown.enter="handleSearch"
           >
           <button
             type="button"
             :disabled="searchLoading || !searchQuery"
-            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
+            class="addbtn px-4 py-2 disabled:opacity-60 rounded-lg text-sm font-medium"
             @click="handleSearch"
           >
             {{ searchLoading ? 'Searching…' : 'Search' }}
@@ -185,14 +185,14 @@ async function handleSave() {
             v-for="(result, i) in searchResults"
             :key="i"
             type="button"
-            class="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500 text-left transition-colors"
+            class="w-full flex items-center gap-3 p-3 rounded-lg border border-white/8 bg-ink-850 hover:border-brass/40 text-left transition-colors"
             @click="selectSearchResult(result)"
           >
             <CoverImage :src="result.coverUrl" :alt="result.title" class="w-10 h-14 flex-shrink-0 rounded" />
             <div class="min-w-0">
-              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ result.title }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ result.author }}</p>
-              <p v-if="result.publishedDate" class="text-xs text-gray-400 dark:text-gray-500">
+              <p class="text-sm font-medium text-bone truncate">{{ result.title }}</p>
+              <p class="text-xs text-muted truncate">{{ result.author }}</p>
+              <p v-if="result.publishedDate" class="text-xs text-faint">
                 {{ result.publishedDate.length === 4 ? `~${result.publishedDate}` : result.publishedDate }}
               </p>
             </div>
@@ -204,8 +204,8 @@ async function handleSave() {
       <div v-if="phase.kind === 'found'" class="space-y-4">
         <div v-if="bookData.coverUrl || bookData.title" class="flex gap-4">
           <CoverImage :src="bookData.coverUrl" :alt="bookData.title" class="w-20 h-28 flex-shrink-0 rounded-lg overflow-hidden" />
-          <div class="text-sm text-gray-500 dark:text-gray-400 space-y-1">
-            <p v-if="bookData.title" class="font-semibold text-gray-900 dark:text-gray-100 text-base">{{ bookData.title }}</p>
+          <div class="text-sm text-muted space-y-1">
+            <p v-if="bookData.title" class="font-semibold text-bone text-base">{{ bookData.title }}</p>
             <p v-if="bookData.author">by {{ bookData.author }}</p>
             <p v-if="bookData.publishedDate">
               {{ bookData.publishedDate.length === 4 ? `expected ~${bookData.publishedDate}` : bookData.publishedDate }}
