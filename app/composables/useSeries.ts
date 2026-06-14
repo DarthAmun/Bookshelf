@@ -1,14 +1,18 @@
 import { db, type Series, type Book } from './useDb'
 import { useLiveQuery } from './useLiveQuery'
 
+export async function addSeries(data: Omit<Series, 'id'>): Promise<Series> {
+  const series: Series = { ...data, id: crypto.randomUUID() }
+  await db.series.add(series)
+  return series
+}
+
+export async function findSeriesByName(name: string): Promise<Series | undefined> {
+  return db.series.where('name').equalsIgnoreCase(name).first()
+}
+
 export function useSeries() {
   const seriesList = useLiveQuery(() => db.series.orderBy('name').toArray(), [])
-
-  async function addSeries(data: Omit<Series, 'id'>) {
-    const series: Series = { ...data, id: crypto.randomUUID() }
-    await db.series.add(series)
-    return series
-  }
 
   async function updateSeries(id: string, changes: Partial<Series>) {
     await db.series.update(id, changes)

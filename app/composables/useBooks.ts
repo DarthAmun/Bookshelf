@@ -1,18 +1,14 @@
 import { db, type Book } from './useDb'
 import { useLiveQuery } from './useLiveQuery'
 
+export async function addBook(data: Omit<Book, 'id' | 'dateAdded'>): Promise<Book> {
+  const book: Book = { ...data, id: crypto.randomUUID(), dateAdded: Date.now() }
+  await db.books.add(book)
+  return book
+}
+
 export function useBooks() {
   const books = useLiveQuery(() => db.books.orderBy('dateAdded').reverse().toArray(), [])
-
-  async function addBook(data: Omit<Book, 'id' | 'dateAdded'>) {
-    const book: Book = {
-      ...data,
-      id: crypto.randomUUID(),
-      dateAdded: Date.now(),
-    }
-    await db.books.add(book)
-    return book
-  }
 
   async function updateBook(id: string, changes: Partial<Book>) {
     await db.books.update(id, changes)

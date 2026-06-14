@@ -82,6 +82,12 @@ const lastAddedDaysAgo = computed(() => {
   if (days === 1) return 'yesterday'
   return `${days} days ago`
 })
+
+const addModal = ref<{ open: () => void } | null>(null)
+
+function handleAdded(id: string) {
+  nextTick(() => document.querySelector(`[data-book-id="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+}
 </script>
 
 <template>
@@ -116,14 +122,17 @@ const lastAddedDaysAgo = computed(() => {
     </p>
 
     <!-- FAB -->
-    <NuxtLink
-      to="/book/add"
+    <button
+      type="button"
       class="fab fixed bottom-8 right-8 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-brass text-ink-950"
       aria-label="Add a book"
+      @click="addModal?.open()"
     >
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <path d="M12 5v14M5 12h14"/>
       </svg>
-    </NuxtLink>
+    </button>
+
+    <AddBookModal ref="addModal" @added="handleAdded" />
   </div>
 </template>

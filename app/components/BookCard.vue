@@ -1,22 +1,15 @@
 <script setup lang="ts">
 import type { Book, Review } from '~/composables/useDb'
+import { colorFromString, spineInitialFor, surnameOf } from '~/utils/bookTheme'
 
 const props = defineProps<{ book: Book; review?: Review; index: number }>()
 
 const HEIGHTS = [248, 266, 256, 272, 250, 262]
-const COLORS = ['#2f3f5c', '#6e3338', '#244a4a', '#7a3a3f', '#553a55', '#6e4329', '#2f5052', '#7a5f2c', '#34503f', '#3c4250', '#46324a', '#494f3a']
 
 const spineHeight = computed(() => HEIGHTS[props.index % HEIGHTS.length])
-const spineColor = computed(() => {
-  const hash = [...props.book.id].reduce((acc, c) => acc + c.charCodeAt(0), 0)
-  return COLORS[hash % COLORS.length]
-})
-const spineInitial = computed(() =>
-  props.book.title.replace(/^(The|A|An)\s+/i, '').charAt(0).toUpperCase()
-)
-const spineAuthorSurname = computed(() =>
-  props.book.author.split(' ').pop() ?? props.book.author
-)
+const spineColor = computed(() => colorFromString(props.book.id))
+const spineInitial = computed(() => spineInitialFor(props.book.title))
+const spineAuthorSurname = computed(() => surnameOf(props.book.author))
 
 const animationDelay = computed(() => `${props.index * 45}ms`)
 </script>
@@ -24,6 +17,7 @@ const animationDelay = computed(() => `${props.index * 45}ms`)
 <template>
   <article
     class="book group"
+    :data-book-id="book.id"
     :style="{ animationDelay }"
   >
     <NuxtLink :to="`/book/${book.id}`" class="block flex flex-col items-center justify-end">
