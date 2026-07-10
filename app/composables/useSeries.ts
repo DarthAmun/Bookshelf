@@ -30,9 +30,11 @@ export function useSeries() {
   }
 
   async function getSeriesProgress(seriesId: string): Promise<{ read: number; total: number; books: Book[] }> {
-    const books = await db.books.where('seriesId').equals(seriesId).toArray()
+    const [books, series] = await Promise.all([
+      db.books.where('seriesId').equals(seriesId).toArray(),
+      db.series.get(seriesId),
+    ])
     const read = books.filter(b => b.status === 'read').length
-    const series = await db.series.get(seriesId)
     const total = series?.knownTotal ?? books.length
     return { read, total, books }
   }

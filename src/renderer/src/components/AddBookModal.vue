@@ -1,16 +1,22 @@
 <script setup lang="ts">
-import { useLibrary } from '~/composables/useLibrary'
+import { ref, reactive, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { addBook } from '~/composables/useBooks'
 import { addSeries, findSeriesByName } from '~/composables/useSeries'
-import { db } from '~/composables/useDb'
-import { extractAsin, extractUrlSlug, lookupByAsin, searchGoogleBooks } from '~/services/bookLookup'
-import type { BookMeta } from '~/services/bookLookup'
+import { useLibraryStore } from '../stores/library'
 import { SPINE_COLORS, colorFromString, spineInitialFor, surnameOf } from '~/utils/bookTheme'
-import type { Book } from '~/composables/useDb'
+import type { Book } from '~/types'
 
-const { public: { googleBooksApiKey } } = useRuntimeConfig()
+const store = useLibraryStore()
+const bookCount = computed(() => store.books.length)
+const accNoDisplay = computed(() => String(bookCount.value + 1).padStart(4, '0'))
 
-const GENRES = ['Fantasy','Sci-Fi','Thriller','Historical Fiction','Mystery','Romance','Horror','Non-fiction']
+const emit = defineEmits<{ (e: 'added', id: string): void }>()
+
+const isOpen = ref(false)
+const titleInput = ref<HTMLInputElement>()
+const fileInput = ref<HTMLInputElement>()
+
+const GENRES = ['Fantasy', 'Sci-Fi', 'Thriller', 'Historical Fiction', 'Mystery', 'Romance', 'Horror', 'Non-fiction']
 const STATUS_OPTIONS: Array<{ value: Book['status']; label: string }> = [
   { value: 'want_to_read', label: 'Want' },
   { value: 'reading', label: 'Reading' },
@@ -18,33 +24,18 @@ const STATUS_OPTIONS: Array<{ value: Book['status']; label: string }> = [
   { value: 'abandoned', label: 'Abandoned' },
 ]
 
-interface LookupHit extends BookMeta { displayColor: string }
-
-const { books } = useLibrary()
-const accNoDisplay = computed(() => String(books.value.length + 1).padStart(4, '0'))
-
-const emit = defineEmits<{ (e: 'added', id: string): void }>()
-
-// template refs
-const isOpen = ref(false)
-const titleInput = ref<HTMLInputElement>()
-const fileInput = ref<HTMLInputElement>()
-
-// --- reactive form (all form fields in one object) ---
 function defaultForm() {
   return {
-    title: '', author: '', genre: '', seriesName: '', seriesPos: '',
+    title: '', author: '', genre: '', seriesName: '', seriesPos: '', amazonUrl: '',
     selectedCloth: SPINE_COLORS[Math.floor(Math.random() * SPINE_COLORS.length)]!,
     selectedStatus: 'want_to_read' as Book['status'],
-    coverUrl: null as string | null, // URL-based cover (from lookup)
+    coverUrl: null as string | null,
   }
 }
 const form = reactive(defaultForm())
 
-// --- blob URL for file-based cover preview ---
 const coverFile = ref<File | null>(null)
 const coverBlobUrl = ref<string | null>(null)
-// unified preview: prefer blob URL (file drop), fall back to lookup URL
 const coverPreview = computed(() => coverBlobUrl.value ?? form.coverUrl)
 
 function revokeBlobUrl() {
@@ -56,7 +47,7 @@ function setCoverFile(file: File) {
   revokeBlobUrl()
   coverFile.value = file
   coverBlobUrl.value = URL.createObjectURL(file)
-  form.coverUrl = null // file takes priority over URL
+  form.coverUrl = null
 }
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -68,19 +59,15 @@ function fileToDataUrl(file: File): Promise<string> {
   })
 }
 
-// --- UI state ---
+// Amazon scrape state
+const amazonUrl = ref('')
+const isScraping = ref(false)
+const scrapeError = ref('')
+const scrapeSuccess = ref(false)
+
 const isSaving = ref(false)
 const coverDropActive = ref(false)
 
-// --- lookup state ---
-const lookupQuery = ref('')
-const lookupResults = ref<LookupHit[]>([])
-const lookupHasNoResults = ref(false)
-const isLookingUp = ref(false)
-let lookupTimer: ReturnType<typeof setTimeout> | null = null
-const showLookupResults = ref(false)
-
-// spine preview
 const spineInitial = computed(() => spineInitialFor(form.title.trim() || 'T'))
 const spineSurname = computed(() => surnameOf(form.author.trim()) || 'Author')
 const titleDisplay = computed(() => form.title.trim() || 'Untitled')
@@ -91,12 +78,11 @@ defineExpose({ open })
 function open() {
   Object.assign(form, defaultForm())
   revokeBlobUrl()
-  lookupQuery.value = ''
-  lookupResults.value = []
-  lookupHasNoResults.value = false
-  showLookupResults.value = false
+  amazonUrl.value = ''
+  scrapeError.value = ''
+  scrapeSuccess.value = false
+  isScraping.value = false
   coverDropActive.value = false
-  isLookingUp.value = false
   isOpen.value = true
   document.body.style.overflow = 'hidden'
   nextTick(() => titleInput.value?.focus())
@@ -105,71 +91,34 @@ function open() {
 function close() {
   isOpen.value = false
   document.body.style.overflow = ''
-  showLookupResults.value = false
   revokeBlobUrl()
 }
 
-// lookup helpers
-function finishSearch(hits: Partial<Book>[]) {
-  lookupResults.value = hits.map(b => ({ ...b, displayColor: colorFromString(b.title ?? '') }))
-  lookupHasNoResults.value = hits.length === 0
-  showLookupResults.value = true
-}
-
-async function doSearch(query: string) {
-  isLookingUp.value = true
-  try { finishSearch(await searchGoogleBooks(query, googleBooksApiKey)) }
-  finally { isLookingUp.value = false }
-}
-
-async function onLookupInput() {
-  const q = lookupQuery.value.trim()
-  if (!q) { lookupResults.value = []; showLookupResults.value = false; lookupHasNoResults.value = false; return }
-  if (lookupTimer) clearTimeout(lookupTimer)
-
-  if (/amazon\./i.test(q) || /\/dp\/[A-Z0-9]{10}/i.test(q)) {
-    const asin = extractAsin(q)
-    if (asin) {
-      isLookingUp.value = true
-      try {
-        const result = await lookupByAsin(asin, extractUrlSlug(q) ?? undefined)
-        if (result.status === 'found') {
-          lookupResults.value = [{ ...result.book, displayColor: colorFromString(asin) }]
-          lookupHasNoResults.value = false
-          showLookupResults.value = true
-        } else if (result.status === 'needs_search' && result.suggestedQuery) {
-          await doSearch(result.suggestedQuery)
-        }
-      } finally {
-        isLookingUp.value = false
-      }
+async function handleAmazonLookup() {
+  const url = amazonUrl.value.trim()
+  if (!url) return
+  isScraping.value = true
+  scrapeError.value = ''
+  scrapeSuccess.value = false
+  try {
+    const result = await window.bookshelf.scrapeBook(url)
+    if (result.error) {
+      scrapeError.value = result.error
       return
     }
+    if (result.title) form.title = result.title
+    if (result.author) form.author = result.author
+    if (result.coverUrl) { form.coverUrl = result.coverUrl; revokeBlobUrl() }
+    if (result.seriesName && !form.seriesName) form.seriesName = result.seriesName
+    if (result.seriesPosition && !form.seriesPos) form.seriesPos = String(result.seriesPosition)
+    form.amazonUrl = url
+    form.selectedCloth = colorFromString(result.asin ?? url)
+    scrapeSuccess.value = true
+  } finally {
+    isScraping.value = false
   }
-
-  lookupTimer = setTimeout(async () => {
-    const q2 = lookupQuery.value.trim()
-    if (q2) await doSearch(q2)
-  }, 400)
 }
 
-function selectResult(r: LookupHit) {
-  if (r.title) form.title = r.title
-  if (r.author) form.author = r.author
-  if (r.genre) form.genre = r.genre
-  if (r.coverUrl) { form.coverUrl = r.coverUrl; revokeBlobUrl() }
-  form.selectedCloth = r.displayColor
-  if (r.seriesNameHint && !form.seriesName) form.seriesName = r.seriesNameHint
-  if (r.seriesPosHint && !form.seriesPos) form.seriesPos = String(r.seriesPosHint)
-  lookupQuery.value = ''
-  showLookupResults.value = false
-}
-
-function hideLookupResults() {
-  setTimeout(() => { showLookupResults.value = false }, 150)
-}
-
-// cover drop / file pick
 function onCoverDrop(e: DragEvent) {
   e.preventDefault()
   coverDropActive.value = false
@@ -183,20 +132,19 @@ function onFileSelect(e: Event) {
 }
 function clearCover() { revokeBlobUrl(); form.coverUrl = null }
 
-// save
 async function save() {
   if (!isValid.value || isSaving.value) return
   isSaving.value = true
   try {
-    // resolve series
     let seriesId: string | undefined
     const sName = form.seriesName.trim()
     if (sName) {
       const existing = await findSeriesByName(sName)
-      seriesId = existing ? existing.id : (await addSeries({ name: sName, author: form.author.trim(), newReleaseAvailable: false })).id
+      seriesId = existing
+        ? existing.id
+        : (await addSeries({ name: sName, author: form.author.trim(), newReleaseAvailable: false })).id
     }
 
-    // parse series position
     let seriesPosition: number | undefined
     let knownTotal: number | undefined
     const posMatch = form.seriesPos.trim().match(/(\d+)(?:\s*(?:of|\/)\s*(\d+))?/)
@@ -204,9 +152,10 @@ async function save() {
       seriesPosition = parseInt(posMatch[1]!)
       if (posMatch[2]) knownTotal = parseInt(posMatch[2])
     }
-    if (seriesId && knownTotal) await db.series.update(seriesId, { knownTotal })
+    if (seriesId && knownTotal) {
+      await window.bookshelf.updateSeries(seriesId, { knownTotal })
+    }
 
-    // resolve cover: convert file to DataURL on save; URL-based covers stored as-is
     const coverUrl = coverFile.value
       ? await fileToDataUrl(coverFile.value)
       : (form.coverUrl ?? undefined)
@@ -215,6 +164,7 @@ async function save() {
       title: form.title.trim(),
       author: form.author.trim(),
       genre: form.genre.trim() || undefined,
+      amazonUrl: form.amazonUrl.trim() || undefined,
       seriesId,
       seriesPosition,
       status: form.selectedStatus,
@@ -231,7 +181,6 @@ async function save() {
 onMounted(() => document.addEventListener('keydown', onKeydown))
 onUnmounted(() => {
   document.removeEventListener('keydown', onKeydown)
-  if (lookupTimer) clearTimeout(lookupTimer)
   revokeBlobUrl()
 })
 function onKeydown(e: KeyboardEvent) {
@@ -267,7 +216,6 @@ function onKeydown(e: KeyboardEvent) {
           <div class="flex flex-col gap-6 border-b p-6 hair md:border-b-0 md:border-r">
             <div>
               <div class="lbl mb-3">Preview</div>
-              <!-- spine uses the shared .spine class + .preview-spine for size overrides -->
               <div v-if="!coverPreview" class="spine preview-spine" :style="{ '--c': form.selectedCloth }">
                 <div class="spine-head">{{ spineInitial }}</div>
                 <div class="spine-rule"></div>
@@ -284,7 +232,6 @@ function onKeydown(e: KeyboardEvent) {
               </div>
             </div>
 
-            <!-- cloth swatches -->
             <div v-if="!coverPreview">
               <div class="lbl mb-2.5">Cloth colour</div>
               <div class="flex flex-wrap gap-2.5">
@@ -301,7 +248,6 @@ function onKeydown(e: KeyboardEvent) {
               </div>
             </div>
 
-            <!-- drop zone -->
             <div
               class="drop-cover flex cursor-pointer flex-col items-center gap-1.5 px-4 py-5 text-center"
               :class="{ hot: coverDropActive }"
@@ -321,43 +267,28 @@ function onKeydown(e: KeyboardEvent) {
 
           <!-- RIGHT: form -->
           <div class="flex flex-col gap-5 p-6">
-            <!-- lookup -->
-            <div class="relative">
-              <div class="lbl mb-2">Find on Amazon / Google Books</div>
-              <div class="relative">
+            <!-- Amazon lookup -->
+            <div>
+              <div class="lbl mb-2">Look up on Amazon</div>
+              <div class="flex gap-2">
                 <input
-                  v-model="lookupQuery"
-                  type="text"
-                  class="field w-full rounded-md py-2 pl-3 pr-9 font-sans text-sm"
-                  placeholder="Title, author or Amazon URL…"
-                  @input="onLookupInput"
-                  @blur="hideLookupResults"
+                  v-model="amazonUrl"
+                  type="url"
+                  class="field flex-1 rounded-md py-2 px-3 font-sans text-sm"
+                  placeholder="Paste Amazon.de URL…"
+                  @keydown.enter="handleAmazonLookup"
                 >
-                <span v-if="isLookingUp" class="absolute right-3 top-1/2 -translate-y-1/2">
-                  <svg class="animate-spin text-faint" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                  </svg>
-                </span>
-              </div>
-              <div
-                v-if="showLookupResults"
-                class="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-xl border py-1.5 hair"
-                style="background:#1b1711; box-shadow: 0 20px 40px -10px rgba(0,0,0,.7);"
-              >
-                <div
-                  v-for="(r, i) in lookupResults"
-                  :key="i"
-                  class="lookup-result"
-                  @mousedown.prevent="selectResult(r)"
+                <button
+                  type="button"
+                  :disabled="isScraping || !amazonUrl"
+                  class="addbtn px-4 py-2 rounded-md text-sm font-medium disabled:opacity-60"
+                  @click="handleAmazonLookup"
                 >
-                  <div class="mini-spine" :style="{ background: r.displayColor }" />
-                  <div class="min-w-0 flex-1">
-                    <div class="truncate font-serif text-sm text-bone">{{ r.title }}</div>
-                    <div class="font-mono text-[10px] text-faint">{{ r.author }}</div>
-                  </div>
-                </div>
-                <div v-if="lookupHasNoResults" class="px-4 py-3 font-mono text-[11px] text-faint">No results found</div>
+                  {{ isScraping ? 'Fetching…' : 'Look up' }}
+                </button>
               </div>
+              <p v-if="scrapeError" class="mt-1.5 text-xs text-red-400">{{ scrapeError }}</p>
+              <p v-if="scrapeSuccess" class="mt-1.5 text-xs text-[#9bc093]">Metadata filled from Amazon</p>
             </div>
 
             <!-- divider -->

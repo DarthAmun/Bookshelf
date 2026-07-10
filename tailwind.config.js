@@ -2,7 +2,7 @@
 export default {
   darkMode: 'media',
   content: [
-    './app/**/*.{vue,js,ts}',
+    './src/renderer/**/*.{vue,js,ts}',
   ],
   theme: {
     extend: {

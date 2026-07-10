@@ -1,23 +1,40 @@
 {
-  "name": "Bookshelf",
-  "type": "module",
+  "name": "bookshelf",
+  "version": "1.0.0",
+  "description": "Personal ebook tracking desktop app",
+  "main": "out/main/index.js",
   "private": true,
   "scripts": {
-    "build": "nuxt build",
-    "dev": "nuxt dev",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "package": "electron-vite build && electron-builder",
+    "postinstall": "electron-rebuild -f -w better-sqlite3"
   },
   "dependencies": {
-    "@vite-pwa/nuxt": "^1.1.1",
-    "dexie": "^4.4.3",
-    "lucide-vue-next": "^1.0.0",
-    "nuxt": "^4.4.8",
-    "vue": "^3.5.35",
-    "vue-router": "^5.1.0"
+    "better-sqlite3": "^12.11.1",
+    "cheerio": "^1.0.0",
+    "node-cron": "^3.0.3"
   },
   "devDependencies": {
-    "@nuxtjs/tailwindcss": "^6.14.0"
+    "@electron-toolkit/preload": "^3.0.0",
+    "@electron-toolkit/tsconfig": "^1.0.1",
+    "@electron/rebuild": "^3.6.0",
+    "@electron-toolkit/utils": "^3.0.0",
+    "@types/better-sqlite3": "^7.6.10",
+    "@types/node": "^20.14.0",
+    "@types/node-cron": "^3.0.11",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "autoprefixer": "^10.4.19",
+    "electron": "^33.0.0",
+    "electron-builder": "^24.13.3",
+    "electron-vite": "^5.0.0",
+    "pinia": "^2.2.0",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "typescript": "^5.4.5",
+    "unplugin-auto-import": "^0.17.6",
+    "unplugin-vue-components": "^0.27.2",
+    "vue": "^3.4.27",
+    "vue-router": "^4.3.2"
   }
 }

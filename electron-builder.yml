@@ -1,0 +1,10 @@
+appId: com.personal.bookshelf
+productName: Bookshelf
+directories:
+  buildResources: resources
+  output: release
+files:
+  - out/**
+linux:
+  target: AppImage
+  category: Office

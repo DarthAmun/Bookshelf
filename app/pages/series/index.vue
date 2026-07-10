@@ -5,7 +5,7 @@ import { checkAllSeries } from '~/services/seriesChecker'
 
 useHead({ title: 'Series — Bookshelf' })
 
-const { addSeries, seriesList } = useSeries()
+const { addSeries, seriesList, getSeriesProgress } = useSeries()
 const seriesWithNew = useLiveQuery(
   () => db.series.filter(s => s.newReleaseAvailable).toArray(),
   []
@@ -13,12 +13,10 @@ const seriesWithNew = useLiveQuery(
 
 const progresses = ref<Record<string, { read: number; total: number }>>({})
 
-watch(() => seriesList.value, async (list) => {
-  const { getSeriesProgress } = useSeries()
-  for (const s of list) {
-    progresses.value[s.id] = await getSeriesProgress(s.id)
-  }
-}, { immediate: true, deep: true })
+watch(seriesList, async (list = []) => {
+  const results = await Promise.all(list.map(s => getSeriesProgress(s.id)))
+  list.forEach((s, i) => { progresses.value[s.id] = results[i] })
+}, { immediate: true })
 
 const { public: { googleBooksApiKey } } = useRuntimeConfig()
 
@@ -52,12 +50,18 @@ async function handleAddSeries() {
         >
           {{ refreshing ? 'Checking…' : 'Refresh all' }}
         </button>
+        <NuxtLink
+          to="/series/add"
+          class="addbtn px-3 py-1.5 text-sm rounded-lg font-medium"
+        >
+          + Import series
+        </NuxtLink>
         <button
           type="button"
-          class="addbtn px-3 py-1.5 text-sm rounded-lg font-medium"
+          class="px-3 py-1.5 text-sm rounded-lg font-medium border border-white/10 text-muted hover:text-bone hover:bg-ink-800 transition-colors"
           @click="showAddForm = !showAddForm"
         >
-          + Add series
+          + Add manually
         </button>
       </div>
     </div>

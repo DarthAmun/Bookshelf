@@ -98,21 +98,24 @@ async function openLibraryLookup(asin: string): Promise<Partial<Book> | null> {
   }
 }
 
-// Step 2: Google Books search — returns up to 5 results for the user to pick from
-export async function searchGoogleBooks(query: string, apiKey?: string): Promise<BookMeta[]> {
-  const cleanedQuery = query.replace(/\bprintType:\S+/g, '').trim()
+async function fetchGoogleVolumes(query: string, apiKey?: string, maxResults = 5): Promise<GoogleVolume[]> {
   const keyParam = apiKey ? `&key=${apiKey}` : ''
   try {
     const res = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(cleanedQuery)}&printType=books&maxResults=5${keyParam}`,
+      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&printType=books&maxResults=${maxResults}${keyParam}`,
     )
     if (!res.ok) return []
-    const data = await res.json()
-    const volumes: GoogleVolume[] = data.items ?? []
-    return volumes.map(v => mapVolumeToBook(v))
+    return ((await res.json()).items ?? []) as GoogleVolume[]
   } catch {
     return []
   }
+}
+
+// Step 2: Google Books search — returns up to 5 results for the user to pick from
+export async function searchGoogleBooks(query: string, apiKey?: string): Promise<BookMeta[]> {
+  const cleanedQuery = query.replace(/\bprintType:\S+/g, '').trim()
+  const volumes = await fetchGoogleVolumes(cleanedQuery, apiKey)
+  return volumes.map(v => mapVolumeToBook(v))
 }
 
 export async function lookupByAsin(asin: string, urlSlug?: string): Promise<LookupResult> {
@@ -131,4 +134,23 @@ export async function lookupByAsin(asin: string, urlSlug?: string): Promise<Look
 
 export function openLibraryCoverUrl(isbn: string, size: 'S' | 'M' | 'L' = 'M'): string {
   return `https://covers.openlibrary.org/b/isbn/${isbn}-${size}.jpg?default=false`
+}
+
+// Fetch up to 40 books for a given series name + author, sorted by series position.
+// Books without a detected position are appended at the end.
+export async function searchSeriesBooks(seriesName: string, author: string, apiKey?: string): Promise<BookMeta[]> {
+  const query = `inauthor:"${author}" "${seriesName}"`
+  const volumes = await fetchGoogleVolumes(query, apiKey, 40)
+  const books = volumes.map(v => mapVolumeToBook(v))
+  const lowerSeries = seriesName.toLowerCase()
+  const authorWords = author.toLowerCase().split(/\s+/)
+  return books
+    .filter((b) => {
+      const lowerAuthor = b.author?.toLowerCase()
+      const authorMatch = authorWords.some(w => w.length > 2 && lowerAuthor?.includes(w))
+      const hintMatch = b.seriesNameHint?.toLowerCase().includes(lowerSeries)
+      const titleMatch = b.title?.toLowerCase().includes(lowerSeries)
+      return authorMatch || hintMatch || titleMatch
+    })
+    .sort((a, b) => (a.seriesPosHint ?? 9999) - (b.seriesPosHint ?? 9999))
 }
